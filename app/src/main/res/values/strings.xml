@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Generate Codes</string>
+    <string name="title_generate">New code</string>
+    <string name="empty_code"> ---- </string>
+    <string name="title_add_checked">Add checked</string>
+    <string name="label_code">Last generated code</string>
+    <string name="label_need_to_be_checked">Still last to be checked :</string>
+    <string name="insert_code_text">Remove checked code</string>
+    <string name="button_remove">Remove</string>
+</resources>
