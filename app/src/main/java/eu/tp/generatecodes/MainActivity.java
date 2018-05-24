@@ -9,6 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -156,7 +157,9 @@ public class MainActivity extends AppCompatActivity {
         lastCodes.setText(Integer.toString(auxCodes.getListCodesToCheck().size()));
     }
 
-    private class MakeGraph extends AsyncTask<Void, Void, Void> {
+    private class MakeGraph extends AsyncTask<Void, Integer, Void> {
+
+        ProgressBar progressBar = findViewById(R.id.progressBar);
 
         @Override
         protected Void doInBackground(Void... voids) {
@@ -179,14 +182,13 @@ public class MainActivity extends AppCompatActivity {
 
             if (Graph.series == null) {
                 Graph.series = new LineGraphSeries<>();
-                auxGraph.generateGraph();
-                /*while (Graph.graphDataTab[9_999] == null) {
-                    try {
-                        Thread.sleep(50);
-                    } catch (InterruptedException e) {
-                        Log.w("generateGraph", "Exception while waited for all graph data to be generated", e);
-                    }
-                }*/
+                //
+                progressBar.setVisibility(View.VISIBLE);
+                //
+                for (int x = 0; x < 10_000; x++) {
+                    auxGraph.updateGivenGraphData(x);
+                    if(x%100==0) publishProgress(x);
+                }
                 Graph.series = new LineGraphSeries<>(Graph.graphDataTab);
                 Graph.series.setThickness(1);
                 graph.addSeries(Graph.series);
@@ -196,6 +198,15 @@ public class MainActivity extends AppCompatActivity {
             }
             return null;
         }
+
+        protected void onProgressUpdate(Integer... progress) {
+            progressBar.setProgress(progress[0]);
+        }
+
+        protected void onPostExecute(Void result) {
+            progressBar.setVisibility(View.INVISIBLE);
+        }
+
     }
 
 }

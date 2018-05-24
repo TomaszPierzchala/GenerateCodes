@@ -39,12 +39,10 @@ public class Graph {
         }
     }
 
-    public void generateGraph(){
-        // create graph data series from Codes list
-        for (int x = 0; x < 10_000; x++) {
-            double y = (auxCodes.getListCodesToCheck().contains(df.format(x))) ? 1. : 0.;
-            graphDataTab[x] = new DataPoint(x, y);
-        }
+    public void updateGivenGraphData(int x){
+        // update given graph DataPoint from Codes list
+        double y = (auxCodes.getListCodesToCheck().contains(df.format(x))) ? 1. : 0.;
+        graphDataTab[x] = new DataPoint(x, y);
     }
 
 }
