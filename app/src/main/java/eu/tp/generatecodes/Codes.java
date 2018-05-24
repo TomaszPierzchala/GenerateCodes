@@ -93,7 +93,9 @@ public class Codes {
         return lastGeneratedCode;
     }
 
-    public void generateCode(){
+    public String generateCode(){
+        String _lastGeneratedCode = null;
+        //
         String oldLastGeneratedCode = lastGeneratedCode;
         int codePosition = ThreadLocalRandom.current().nextInt(listCodesToCheck.size());
         lastGeneratedCode = listCodesToCheck.get(codePosition);
@@ -102,6 +104,7 @@ public class Codes {
             // if fails than rollback
             saveCodesList();
             saveLastGeneratedCode();
+            _lastGeneratedCode = lastGeneratedCode;
         } catch (Exception e) {
             listCodesToCheck.add(lastGeneratedCode);
             lastGeneratedCode = oldLastGeneratedCode;
@@ -109,6 +112,7 @@ public class Codes {
             throw new RuntimeException("generateCode() : Faild to save modified files");
         }
         Log.i("generateCode()", " lastGeneratedCode = " + lastGeneratedCode);
+        return _lastGeneratedCode;
     }
 
     public boolean removeCode(String toBeRemoved){

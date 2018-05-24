@@ -66,7 +66,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     protected void generateCode() {
-        auxCodes.generateCode();
+        String lastGenrateCode = auxCodes.generateCode();
+        updateInfo(lastGenrateCode);
     }
 
     protected boolean removeCode(String toBeRemoved) {
@@ -121,10 +122,11 @@ public class MainActivity extends AppCompatActivity {
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         setVisibility(navigationId);
 
-        updateInfo();
+        updateInfo(null);
     }
 
     public void removeCode(View v) {
+        // onButton clik at Remove (Remoce subview)
         EditText insertCode = findViewById(R.id.insertCode);
         String toBeRemoved = insertCode.getText().toString();
         boolean wasRemoved = removeCode(toBeRemoved);
@@ -141,14 +143,13 @@ public class MainActivity extends AppCompatActivity {
         insertCode.setText(getText(R.string.insert_code_text));
 
     }
-    private void updateInfo(){
-        updateCodesToCheckTextView();
-        new MakeGraph().execute((Void) null);
-    }
 
     private void updateInfo(String removedCode){
-        auxGraph.updateGraphDataTab(removedCode);
-        updateInfo();
+        if(removedCode!=null) {
+            auxGraph.updateGraphDataTab(removedCode);
+        }
+        updateCodesToCheckTextView();
+        new MakeGraph().execute((Void) null);
     }
     private void updateCodesToCheckTextView() {
         TextView lastCodes = findViewById(R.id.lastCodes);
