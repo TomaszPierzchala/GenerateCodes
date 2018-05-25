@@ -1,6 +1,7 @@
 package eu.tp.generatecodes;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -14,7 +15,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.jjoe64.graphview.GraphView;
-import com.jjoe64.graphview.series.LineGraphSeries;
+import com.jjoe64.graphview.ValueDependentColor;
+import com.jjoe64.graphview.series.BarGraphSeries;
+import com.jjoe64.graphview.series.DataPoint;
 
 import eu.tp.codes.generatecodes.R;
 
@@ -25,14 +28,12 @@ import static eu.tp.codes.generatecodes.R.id.navigation_generate;
 
 public class MainActivity extends AppCompatActivity {
 
-    private TextView mTextCode;
     private Codes auxCodes = null;
     private Graph auxGraph = null;
     private static int navigationId = R.id.navigation_generate;
 
     private final float SMALL = 20f;
     private final float BIG = 36f;
-
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener;
 
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
                 switch (item.getItemId()) {
                     case R.id.navigation_generate:
                         generateCode();
+                        TextView mTextCode = findViewById(R.id.code);
                         mTextCode.setText(auxCodes.getLastGeneratedCode());
                         return true;
                     case R.id.navigation_add_checked:
@@ -58,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
                         insertCode.setTextSize(SMALL);
                         insertCode.setTextColor(getResources().getColor(colorBackground, null));
 
-                        mTextCode.setText(R.string.title_add_checked);
                         return true;
                 }
                 return false;
@@ -67,13 +68,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     protected void generateCode() {
-        String lastGenrateCode = auxCodes.generateCode();
-        updateInfo(lastGenrateCode);
+        String lastRemovedCode = auxCodes.generateCode();
+        if(lastRemovedCode!=null) {
+            auxGraph.updateGraphDataTab(lastRemovedCode);
+        }
+        updateInfoAndGraph();
     }
 
     protected boolean removeCode(String toBeRemoved) {
         boolean wasRemoved = auxCodes.removeCode(toBeRemoved);
-        if(wasRemoved) updateInfo(toBeRemoved);
+        if(wasRemoved){
+            auxGraph.updateGraphDataTab(toBeRemoved);
+        }
+        updateInfoAndGraph();
         return wasRemoved;
     }
 
@@ -102,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
         auxCodes = Codes.singletonFactory(this);
         auxGraph = Graph.singletonFactory(auxCodes);
 
-        mTextCode = findViewById(R.id.code);
+        TextView mTextCode = findViewById(R.id.code);
         mTextCode.setText(auxCodes.getLastGeneratedCode());
 
         final EditText insertCode = findViewById(R.id.insertCode);
@@ -123,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         setVisibility(navigationId);
 
-        updateInfo(null);
+        updateInfoAndGraph();
     }
 
     public void removeCode(View v) {
@@ -133,7 +140,7 @@ public class MainActivity extends AppCompatActivity {
         boolean wasRemoved = removeCode(toBeRemoved);
 
         Context context = getApplicationContext();
-        CharSequence text = toBeRemoved + ((wasRemoved) ? " was REMOVED" : " was Not removed");
+        CharSequence text = "\""+ toBeRemoved + "\"" + ((wasRemoved) ? " was REMOVED" : " was Not removed");
         int duration = Toast.LENGTH_LONG;
 
         Toast toast = Toast.makeText(context, text, duration);
@@ -142,13 +149,9 @@ public class MainActivity extends AppCompatActivity {
         insertCode.setTextSize(SMALL);
         insertCode.setTextColor(getResources().getColor(colorBackground, null));
         insertCode.setText(getText(R.string.insert_code_text));
-
     }
 
-    private void updateInfo(String removedCode){
-        if(removedCode!=null) {
-            auxGraph.updateGraphDataTab(removedCode);
-        }
+    private void updateInfoAndGraph(){
         updateCodesToCheckTextView();
         new MakeGraph().execute((Void) null);
     }
@@ -174,35 +177,42 @@ public class MainActivity extends AppCompatActivity {
             // set manual X bounds
             graph.getViewport().setXAxisBoundsManual(true);
             graph.getViewport().setMinX(0);
-            graph.getViewport().setMaxX(10_000);
+            graph.getViewport().setMaxX(Graph.getNCodes());
             // set manual Y bounds
             graph.getViewport().setYAxisBoundsManual(true);
             graph.getViewport().setMinY(0);
             graph.getViewport().setMaxY(1);
 
             if (Graph.series == null) {
-                Graph.series = new LineGraphSeries<>();
+                Graph.series = new BarGraphSeries<>();
                 //
                 progressBar.setVisibility(View.VISIBLE);
                 //
-                for (int x = 0; x < 10_000; x++) {
+                for (int x = 0; x < Graph.getNBins(); x++) {
                     auxGraph.updateGivenGraphData(x);
-                    if(x%100==0) publishProgress(x);
+                    publishProgress(100 * x/Graph.getNBins());
                 }
-                Graph.series = new LineGraphSeries<>(Graph.graphDataTab);
-                Graph.series.setThickness(1);
-                graph.addSeries(Graph.series);
-            } else {
-                Graph.series.resetData(Graph.graphDataTab);
-                graph.addSeries(Graph.series);
             }
+            Graph.series = new BarGraphSeries<>(Graph.graphDataTab);
+            Graph.series.setDataWidth(Graph.getNCodes()/Graph.getNBins());
+            Graph.series.setSpacing(0);
+            graph.addSeries(Graph.series);
+
+            Graph.series.setValueDependentColor(new ValueDependentColor<DataPoint>() {
+
+                @Override
+                public int get(DataPoint data) {
+                    return Color.argb((int) data.getY()*255 * Graph.getNBins()/Graph.getNCodes(), 0, 0, 255 );
+                }
+            });
             return null;
         }
 
+        @Override
         protected void onProgressUpdate(Integer... progress) {
             progressBar.setProgress(progress[0]);
         }
-
+        @Override
         protected void onPostExecute(Void result) {
             progressBar.setVisibility(View.INVISIBLE);
         }

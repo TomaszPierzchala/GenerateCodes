@@ -2,8 +2,8 @@ package eu.tp.generatecodes;
 
 import android.util.Log;
 
+import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
-import com.jjoe64.graphview.series.LineGraphSeries;
 
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -21,8 +21,11 @@ public class Graph {
         return theGraph;
     }
 
-    static LineGraphSeries<DataPoint> series = null;
-    static DataPoint[] graphDataTab = new DataPoint[10_000];
+    private static final int nBins = 50;
+    private static final int nCodes = 10_000;
+    
+    static BarGraphSeries<DataPoint> series = null;
+    static DataPoint[] graphDataTab = new DataPoint[nBins];
 
     private DecimalFormat df = new DecimalFormat("0000");
 
@@ -30,10 +33,20 @@ public class Graph {
         df.setParseIntegerOnly(true);
     }
 
+    public static int getNBins() {
+        return nBins;
+    }
+
+    public static int getNCodes() {
+        return nCodes;
+    }
+
     public void updateGraphDataTab(String removedCode){
         try {
             int x = df.parse(removedCode).intValue();
-            graphDataTab[x] = new DataPoint(x,0);
+            x = nBins * x/nCodes;
+            double y = graphDataTab[x].getY() + 1.;
+            graphDataTab[x] = new DataPoint((x+0.5)*nCodes/nBins, y);
         } catch (ParseException e) {
             Log.e("updateGraphDataTab(" + removedCode +")", "thrown ParseException", e);
         }
@@ -41,8 +54,11 @@ public class Graph {
 
     public void updateGivenGraphData(int x){
         // update given graph DataPoint from Codes list
-        double y = (auxCodes.getListCodesToCheck().contains(df.format(x))) ? 1. : 0.;
-        graphDataTab[x] = new DataPoint(x, y);
+        double y = 0;
+        for(int c = x*nCodes/nBins; c<(x+1)*nCodes/nBins; c++) {
+            y += (auxCodes.getListCodesToCheck().contains(df.format(c))) ? 0. : 1.;
+        }
+        graphDataTab[x] = new DataPoint((x+0.5)*nCodes/nBins, y);
     }
 
 }

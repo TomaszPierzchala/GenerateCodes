@@ -110,7 +110,6 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:indeterminate="false"
-        android:max="10000"
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="@+id/graph"
         app:layout_constraintEnd_toEndOf="@+id/graph"
