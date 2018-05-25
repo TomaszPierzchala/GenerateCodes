@@ -45,21 +45,6 @@ public class Codes {
         readCodesList();
     }
 
-    /*private List<String> readCodes(){
-        List<String> codes = new ArrayList<>();
-        byte[] bytes = new byte[4];
-        try (FileInputStream fin = theContext.openFileInput(listFilename)) {
-            while(fin.read(bytes, 0, 4) == 4){
-                String readCode = new String(bytes, Charset.defaultCharset());
-                codes.add(readCode);
-            }
-            Log.i("readCodes()", ": list.size()=" + codes.size());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return codes;
-    }*/
-
     private void readLastGeneratedCode(){
         File file = new File(theContext.getFilesDir(), lastGeneratedFilename);
         if(file.exists()){
@@ -83,23 +68,12 @@ public class Codes {
         }
     }
 
-    /*private void removeCodeFromList(String code){
-        if(!listCodesToCheck.remove(code)) {
-            throw new NoSuchElementException("No code = " + code + " in the code list");
-        }
-    }*/
-
     public String getLastGeneratedCode() {
         return lastGeneratedCode;
     }
 
-    public String generateCode(){
+    private String saveFiles(String oldLastGeneratedCode){
         String _lastGeneratedCode = null;
-        //
-        String oldLastGeneratedCode = lastGeneratedCode;
-        int codePosition = ThreadLocalRandom.current().nextInt(listCodesToCheck.size());
-        lastGeneratedCode = listCodesToCheck.get(codePosition);
-        listCodesToCheck.remove(codePosition);
         try {
             // if fails than rollback
             saveCodesList();
@@ -108,16 +82,35 @@ public class Codes {
         } catch (Exception e) {
             listCodesToCheck.add(lastGeneratedCode);
             lastGeneratedCode = oldLastGeneratedCode;
-            Log.e("generateCode()", "Faild to save modified files", e);
-            throw new RuntimeException("generateCode() : Faild to save modified files");
+            Log.e("saveFiles()", "Faild to save modified files", e);
+            throw new RuntimeException("saveFiles() : Faild to save modified files");
         }
-        Log.i("generateCode()", " lastGeneratedCode = " + lastGeneratedCode);
         return _lastGeneratedCode;
+    }
+
+    public String generateCode(){
+        //
+        String oldLastGeneratedCode = lastGeneratedCode;
+        int codePosition = ThreadLocalRandom.current().nextInt(listCodesToCheck.size());
+        lastGeneratedCode = listCodesToCheck.get(codePosition);
+        listCodesToCheck.remove(codePosition);
+
+        return saveFiles(oldLastGeneratedCode);
     }
 
     public boolean removeCode(String toBeRemoved){
         boolean success = false;
+        String oldLastGeneratedCode = lastGeneratedCode;
+        String _lastGeneratedCode = null;
+
         success = listCodesToCheck.remove(toBeRemoved);
+
+        if(success){
+            lastGeneratedCode = toBeRemoved;
+            _lastGeneratedCode = saveFiles(oldLastGeneratedCode);
+            success = lastGeneratedCode.equals(_lastGeneratedCode);
+        }
+
         Log.i("Codes.removeCode()", " " + toBeRemoved + " was (" + success + ") removed.");
         return success;
     }
@@ -185,5 +178,4 @@ public class Codes {
 
     }
 
-//    public List<>
 }
