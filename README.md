@@ -18,4 +18,4 @@ Comparing to other Google Play apps, it **keeps tracs** even **after turned off*
 It **allows to skip** some **codes** when **already tested** (for example by your girlfriend).
 
 ### Application view
-<img src="https://github.com/TomaszPierzchala/GenerateCodes/new_code.png" title="main view"/>
+<img src="https://github.com/TomaszPierzchala/GenerateCodes/blob/master/new_code.png" title="main view" width="350"/>
