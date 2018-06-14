@@ -34,6 +34,8 @@ public class MainActivity extends AppCompatActivity {
 
     private final float SMALL = 20f;
     private final float BIG = 36f;
+    private final long waitBeforeRegenerate = 5000; // wait 5s to avoid accidental regeneration
+    long lastGeneratedTime = System.currentTimeMillis();
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener;
 
@@ -68,6 +70,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     protected void generateCode() {
+        if(System.currentTimeMillis() - lastGeneratedTime < waitBeforeRegenerate){
+            Context context = getApplicationContext();
+            CharSequence text = "can NOT generate new code, please wait few more seconds (<5s)";
+            int duration = Toast.LENGTH_SHORT;
+
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+            return;
+        }
+        lastGeneratedTime = System.currentTimeMillis();
         String lastRemovedCode = auxCodes.generateCode();
         if(lastRemovedCode!=null) {
             auxGraph.updateGraphDataTab(lastRemovedCode);
