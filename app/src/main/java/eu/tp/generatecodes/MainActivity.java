@@ -146,9 +146,7 @@ public class MainActivity extends AppCompatActivity {
         Toast toast = Toast.makeText(context, text, duration);
         toast.show();
 
-        insertCode.setTextSize(SMALL);
         insertCode.setTextColor(getResources().getColor(colorBackground, null));
-        insertCode.setText(getText(R.string.insert_code_text));
     }
 
     private void updateInfoAndGraph(){
