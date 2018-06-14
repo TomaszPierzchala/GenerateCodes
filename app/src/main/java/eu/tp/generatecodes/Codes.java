@@ -155,6 +155,22 @@ public class Codes {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        // aux codes already checked
+        List<String> alreadyChecked = new ArrayList<>();
+
+        DecimalFormat df = new DecimalFormat("0000");
+        df.setParseIntegerOnly(true);
+
+        for(int i=0;i<10_000;i++){
+            String code = df.format(Integer.valueOf(i));
+
+            if(!listCodesToCheck.contains(code)){
+                Log.i("Checked ...", code);
+                alreadyChecked.add(code);
+            }
+        }
+        Log.i("Checked #", Integer.toString(alreadyChecked.size()));
+        Log.i("File DIR", theContext.getFilesDir().getAbsolutePath());
     }
 
     private void generateAllCodes() {
