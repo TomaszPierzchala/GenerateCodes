@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Generate Codes</string>
+    <string name="app_name">Generate Codes DEV</string>
     <string name="title_generate">New code</string>
     <string name="empty_code"> ---- </string>
     <string name="title_add_checked">Add checked</string>
