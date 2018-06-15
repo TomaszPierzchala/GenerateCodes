@@ -1,6 +1,7 @@
 package eu.tp.generatecodes;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.io.File;
@@ -16,19 +17,21 @@ import java.util.concurrent.ThreadLocalRandom;
 import eu.tp.codes.generatecodes.R;
 
 public class Codes {
-    private final String listFilename = "codes";
+    private final String toBeCheckedCodeListFilename = "codes";
+    private final String reCheckCodeListFilename = "alreadyTestedCodes";
     private final String lastGeneratedFilename = "lastGenerated";
 
     // Context
     private static Codes theCodes = null;
     private static Context theContext = null;
 
-    private List<String> listCodesToCheck = null;
+    private List<String> toBeCheckedCodeList = null;
+    private List<String> reCheckCodeList = null;
 
     private String lastGeneratedCode;
 
-    public List<String> getListCodesToCheck() {
-        return listCodesToCheck;
+    public List<String> getToBeCheckedCodeList() {
+        return toBeCheckedCodeList;
     }
 
     public synchronized static  Codes singletonFactory(Context context){
@@ -72,118 +75,163 @@ public class Codes {
         return lastGeneratedCode;
     }
 
-    private String saveFiles(String oldLastGeneratedCode){
-        String _lastGeneratedCode = null;
+    private CodeRemovedFromList saveFiles(CodeRemovedFromList codeRemovedFrom){
         try {
             // if fails than rollback
             saveCodesList();
             saveLastGeneratedCode();
-            _lastGeneratedCode = lastGeneratedCode;
+            codeRemovedFrom.setSuccess(true);
         } catch (Exception e) {
-            listCodesToCheck.add(lastGeneratedCode);
-            lastGeneratedCode = oldLastGeneratedCode;
+            if(codeRemovedFrom.getRemovedFromCodeList() == CodeLists.BOTH){
+                toBeCheckedCodeList.add(lastGeneratedCode);
+                reCheckCodeList.add(lastGeneratedCode);
+            } else {
+                List<String> listOfCodes = (codeRemovedFrom.getRemovedFromCodeList() == CodeLists.TO_BE_CHECKED) ? toBeCheckedCodeList : reCheckCodeList;
+                listOfCodes.add(lastGeneratedCode);
+            }
+            lastGeneratedCode = codeRemovedFrom.getOldCode();
+            codeRemovedFrom.setSuccess(false);
             Log.e("saveFiles()", "Faild to save modified files", e);
-            throw new RuntimeException("saveFiles() : Faild to save modified files");
         }
-        return _lastGeneratedCode;
+        return codeRemovedFrom;
     }
 
-    public String generateCode(){
+    public CodeRemovedFromList generateCode(){
         //
-        String oldLastGeneratedCode = lastGeneratedCode;
-        int codePosition = ThreadLocalRandom.current().nextInt(listCodesToCheck.size());
-        lastGeneratedCode = listCodesToCheck.get(codePosition);
-        listCodesToCheck.remove(codePosition);
+        int toBeCheckedSize = toBeCheckedCodeList.size();
+        int reCheckCodeSize = reCheckCodeList.size();
 
-        return saveFiles(oldLastGeneratedCode);
-    }
-
-    public boolean removeCode(String toBeRemoved){
-        boolean success = false;
-        String oldLastGeneratedCode = lastGeneratedCode;
-        String _lastGeneratedCode = null;
-
-        success = listCodesToCheck.remove(toBeRemoved);
-
-        if(success){
-            lastGeneratedCode = toBeRemoved;
-            _lastGeneratedCode = saveFiles(oldLastGeneratedCode);
-            success = lastGeneratedCode.equals(_lastGeneratedCode);
+        if(toBeCheckedSize == 0 && reCheckCodeSize == 0){
+            lastGeneratedCode = "#*-*#";
+            return new CodeRemovedFromList("All codes already generated!", null);
         }
 
-        Log.i("Codes.removeCode()", " " + toBeRemoved + " was (" + success + ") removed.");
-        return success;
+        int totalWeightedSize = toBeCheckedSize + reCheckCodeSize;
+
+        CodeRemovedFromList codeRemovedFrom;
+        if(reCheckCodeList.size() == 0
+                || ThreadLocalRandom.current().nextInt(totalWeightedSize) < toBeCheckedSize){
+            //
+            codeRemovedFrom = randomlyRemoveFromList(CodeLists.TO_BE_CHECKED);
+        } else {
+            //
+            codeRemovedFrom = randomlyRemoveFromList(CodeLists.ALREADY_CHECKED);
+        }
+
+        return saveFiles(codeRemovedFrom);
+    }
+
+    private CodeRemovedFromList randomlyRemoveFromList(CodeLists codeList) {
+        if(codeList==CodeLists.BOTH) throw new RuntimeException("codeList should be here either TO_BE_CHECKED or ALREADY_CHECKED");
+        CodeRemovedFromList codeRemovedFrom = new CodeRemovedFromList(lastGeneratedCode, codeList);
+        List<String> listOfCodes = (codeList == CodeLists.TO_BE_CHECKED)? toBeCheckedCodeList: reCheckCodeList;
+
+        int codePosition = ThreadLocalRandom.current().nextInt(listOfCodes.size());
+        lastGeneratedCode = listOfCodes.remove(codePosition);
+
+        return codeRemovedFrom;
+    }
+
+    public CodeRemovedFromList removeCode(String toBeRemoved){
+
+        if(toBeRemoved.equals("123456789")){
+
+            DecimalFormat df = new DecimalFormat("0000");
+            df.setParseIntegerOnly(true);
+
+            reCheckCodeList = new ArrayList<>();
+
+
+            for(int i=0;i<10_000;i++){
+                String code = df.format(Integer.valueOf(i));
+                if(!toBeCheckedCodeList.contains(code)){
+                    reCheckCodeList.add(code);
+                }
+            }
+
+            String text = "Have generated "+ reCheckCodeList.size() +" codes to rechecked again";
+            return new CodeRemovedFromList(text, null);
+        }
+
+        boolean success_codesToBeChecked, success_recheckedCodes;
+        String oldLastGeneratedCode = lastGeneratedCode;
+
+        success_codesToBeChecked = toBeCheckedCodeList.remove(toBeRemoved);
+        success_recheckedCodes = reCheckCodeList.remove(toBeRemoved);
+
+        if(success_codesToBeChecked && success_recheckedCodes){
+            return genCodeRemovedFromList(toBeRemoved, oldLastGeneratedCode, CodeLists.BOTH);
+        } else if(success_codesToBeChecked){
+            return genCodeRemovedFromList(toBeRemoved, oldLastGeneratedCode, CodeLists.TO_BE_CHECKED);
+        } else if(success_recheckedCodes) {
+                return genCodeRemovedFromList(toBeRemoved, oldLastGeneratedCode, CodeLists.ALREADY_CHECKED);
+        }
+
+        return new CodeRemovedFromList(false);
+    }
+
+    @NonNull
+    private CodeRemovedFromList genCodeRemovedFromList(String toBeRemoved, String oldLastGeneratedCode, CodeLists codeList) {
+        lastGeneratedCode = toBeRemoved;
+        CodeRemovedFromList codeRemovedFrom = new CodeRemovedFromList(oldLastGeneratedCode, codeList);
+        return saveFiles(codeRemovedFrom);
     }
 
     private void saveCodesList() throws Exception {
-        File file = new File(theContext.getFilesDir(), listFilename);
-        long t0 = file.lastModified();
-        long fileLength0 = file.length();
-
-        try (FileOutputStream outputStream = theContext.openFileOutput(listFilename, Context.MODE_PRIVATE)) {
-            for(int cnt=0; cnt<listCodesToCheck.size(); cnt++) {
-                String code = listCodesToCheck.get(cnt);
+        try (FileOutputStream outputStream = theContext.openFileOutput(toBeCheckedCodeListFilename, Context.MODE_PRIVATE)) {
+            for(String code : toBeCheckedCodeList) {
                 outputStream.write(code.getBytes());
             }
         }
-        long now = System.currentTimeMillis();
-        long t1 = file.lastModified();
-        if(!(t1 > t0)) Log.e(this.getClass().getSimpleName(), "saveCodesList(): NOT recently modified");
 
-        long fileLength1 = file.length();
-        if(fileLength1 - fileLength0 != -4) Log.e(this.getClass().getSimpleName(), "saveCodesList(): NOT File is shorter by 4 bytes but : " +
-                (fileLength1 - fileLength0));
+        try (FileOutputStream outputStream = theContext.openFileOutput(reCheckCodeListFilename, Context.MODE_PRIVATE)) {
+            for (String code : reCheckCodeList) {
+                outputStream.write(code.getBytes());
+            }
+        }
+
     }
 
     private void readCodesList(){
-        if(listCodesToCheck!=null){
-            listCodesToCheck.clear();
+        toBeCheckedCodeList = new ArrayList<>();
+        reCheckCodeList = new ArrayList<>();
+        readList(toBeCheckedCodeList, toBeCheckedCodeListFilename);
+        readList(reCheckCodeList, reCheckCodeListFilename);
+    }
+
+    private void readList(List<String> listToBeRead, String fromFile) {
+        File file = new File(theContext.getFilesDir(), fromFile);
+        if(!file.exists()) return;
+
+        if(listToBeRead!=null){
+            listToBeRead.clear();
         } else {
-            listCodesToCheck = new ArrayList<>();
+            listToBeRead = new ArrayList<>();
         }
-        if(listCodesToCheck.size() != 0) Log.e(this.getClass().getSimpleName(), "readCodesList(): List of Codes NOT empty, but is " +
-                listCodesToCheck.size());
-        Log.i("readCodesList()", "listCodesToCheck.size() = " + listCodesToCheck.size());
 
         byte[] bytes = new byte[4];
-        try (FileInputStream fin = theContext.openFileInput(listFilename)) {
+        try (FileInputStream fin = theContext.openFileInput(fromFile)) {
             while(fin.read(bytes, 0, 4) == 4){
                 String readCode = new String(bytes, Charset.defaultCharset());
-                listCodesToCheck.add(readCode);
+                listToBeRead.add(readCode);
             }
-            Log.i("readCodeList()", ": list.size()=" + listCodesToCheck.size());
+            Log.i("READ", ": from "+fromFile + " #=" + listToBeRead.size());
         } catch (IOException e) {
             e.printStackTrace();
         }
-        // aux codes already checked
-        List<String> alreadyChecked = new ArrayList<>();
-
-        DecimalFormat df = new DecimalFormat("0000");
-        df.setParseIntegerOnly(true);
-
-        for(int i=0;i<10_000;i++){
-            String code = df.format(Integer.valueOf(i));
-
-            if(!listCodesToCheck.contains(code)){
-                Log.i("Checked ...", code);
-                alreadyChecked.add(code);
-            }
-        }
-        Log.i("Checked #", Integer.toString(alreadyChecked.size()));
-        Log.i("File DIR", theContext.getFilesDir().getAbsolutePath());
     }
 
     private void generateAllCodes() {
 
-        File file = new File(theContext.getFilesDir(), listFilename);
+        File file = new File(theContext.getFilesDir(), toBeCheckedCodeListFilename);
         if(file.exists()){
-            Log.i("generateAllCodes()", listFilename + " already EXISTS");
+            Log.i("generateAllCodes()", toBeCheckedCodeListFilename + " already EXISTS");
             return;
         }
         DecimalFormat df = new DecimalFormat("0000");
         df.setParseIntegerOnly(true);
 
-        try (FileOutputStream outputStream = theContext.openFileOutput(listFilename, Context.MODE_PRIVATE)) {
+        try (FileOutputStream outputStream = theContext.openFileOutput(toBeCheckedCodeListFilename, Context.MODE_PRIVATE)) {
             for(int cnt=0; cnt<10_000; cnt++) {
                 String code = df.format(cnt);
                 outputStream.write(code.getBytes());

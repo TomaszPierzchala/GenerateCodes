@@ -56,7 +56,7 @@ public class Graph {
         // update given graph DataPoint from Codes list
         double y = 0;
         for(int c = x*nCodes/nBins; c<(x+1)*nCodes/nBins; c++) {
-            y += (auxCodes.getListCodesToCheck().contains(df.format(c))) ? 0. : 1.;
+            y += (auxCodes.getToBeCheckedCodeList().contains(df.format(c))) ? 0. : 1.;
         }
         graphDataTab[x] = new DataPoint((x+0.5)*nCodes/nBins, y);
     }

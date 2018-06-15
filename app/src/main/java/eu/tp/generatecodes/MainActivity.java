@@ -80,20 +80,34 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         lastGeneratedTime = System.currentTimeMillis();
-        String lastRemovedCode = auxCodes.generateCode();
-        if(lastRemovedCode!=null) {
-            auxGraph.updateGraphDataTab(lastRemovedCode);
+
+        CodeRemovedFromList codeRemovedFromList = auxCodes.generateCode();
+        Boolean success = codeRemovedFromList.getSuccess();
+
+        Context context = getApplicationContext();
+        CharSequence text;
+        int duration = Toast.LENGTH_LONG;
+
+        if(success == null){
+            text = codeRemovedFromList.getOldCode();
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+        } else if(success) {
+            auxGraph.updateGraphDataTab(auxCodes.getLastGeneratedCode());
+            text = "Code was removed from " + codeRemovedFromList.getRemovedFromCodeList();
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
         }
         updateInfoAndGraph();
     }
 
-    protected boolean removeCode(String toBeRemoved) {
-        boolean wasRemoved = auxCodes.removeCode(toBeRemoved);
-        if(wasRemoved){
+    protected CodeRemovedFromList removeCode(String toBeRemoved) {
+        CodeRemovedFromList CodeRemovedFromList = auxCodes.removeCode(toBeRemoved);
+        if(CodeRemovedFromList.getSuccess()!=null && CodeRemovedFromList.getSuccess()){
             auxGraph.updateGraphDataTab(toBeRemoved);
         }
         updateInfoAndGraph();
-        return wasRemoved;
+        return CodeRemovedFromList;
     }
 
     private void setVisibility(int itemId) {
@@ -149,10 +163,18 @@ public class MainActivity extends AppCompatActivity {
         // onButton clik at Remove (Remoce subview)
         EditText insertCode = findViewById(R.id.insertCode);
         String toBeRemoved = insertCode.getText().toString();
-        boolean wasRemoved = removeCode(toBeRemoved);
+        CodeRemovedFromList CodeRemovedFromList = removeCode(toBeRemoved);
 
         Context context = getApplicationContext();
-        CharSequence text = "\""+ toBeRemoved + "\"" + ((wasRemoved) ? " was REMOVED" : " was Not removed");
+        CharSequence text;
+        if(CodeRemovedFromList.getSuccess() == null){
+            text = CodeRemovedFromList.getOldCode();
+        } else {
+            boolean wasRemoved = CodeRemovedFromList.getSuccess();
+            text = "\""+ toBeRemoved + "\"" + ((wasRemoved) ? " was REMOVED" : " was Not removed")
+            + ((CodeRemovedFromList.getRemovedFromCodeList()!=null)? " from " + CodeRemovedFromList.getRemovedFromCodeList(): "");
+        }
+
         int duration = Toast.LENGTH_LONG;
 
         Toast toast = Toast.makeText(context, text, duration);
@@ -167,7 +189,7 @@ public class MainActivity extends AppCompatActivity {
     }
     private void updateCodesToCheckTextView() {
         TextView lastCodes = findViewById(R.id.lastCodes);
-        lastCodes.setText(Integer.toString(auxCodes.getListCodesToCheck().size()));
+        lastCodes.setText(Integer.toString(auxCodes.getToBeCheckedCodeList().size()));
     }
 
     private class MakeGraph extends AsyncTask<Void, Integer, Void> {
