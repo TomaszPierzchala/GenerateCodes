@@ -17,3 +17,5 @@ but never repetes.
 Comparing to other Google Play apps, it **keeps tracs** even **after turned off** (not reinstalled - but this is done by purpouse).
 It **allows to skip** some **codes** when **already tested** (for example by your girlfriend).
 
+### Application view
+<img src="https://github.com/TomaszPierzchala/GenerateCodes/blob/master/new_code.png" title="main view" width="350"/>
