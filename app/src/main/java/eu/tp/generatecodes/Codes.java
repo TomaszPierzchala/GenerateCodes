@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -141,13 +142,30 @@ public class Codes {
 
             reCheckCodeList = new ArrayList<>();
 
+            long t0 = System.currentTimeMillis();
+
 
             for(int i=0;i<10_000;i++){
                 String code = df.format(Integer.valueOf(i));
-                if(!toBeCheckedCodeList.contains(code)){
-                    reCheckCodeList.add(code);
+                reCheckCodeList.add(code);
+            }
+
+            Iterator<String> iToBeChecked = toBeCheckedCodeList.iterator();
+            String toBeChecked = (iToBeChecked.hasNext())?iToBeChecked.next():"";
+
+            Iterator<String> iReChecked = reCheckCodeList.iterator();
+            while(iReChecked.hasNext() && !toBeChecked.equals("")){
+                String reChecked = iReChecked.next();
+
+                if(reChecked.equals(toBeChecked)){
+                    iReChecked.remove();
+                    toBeChecked = (iToBeChecked.hasNext())?iToBeChecked.next():"";
                 }
             }
+
+            long t1 = System.currentTimeMillis();
+
+            Log.i("DEV recheck list", String.valueOf(t1-t0) + "ms, #="+reCheckCodeList.size());
 
             String text = "Have generated "+ reCheckCodeList.size() +" codes to rechecked again";
             return new CodeRemovedFromList(text, null);
