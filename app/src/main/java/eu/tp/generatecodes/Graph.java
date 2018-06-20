@@ -53,7 +53,9 @@ public class Graph {
         }
     }
 
-    public void createGraphDataTab(MainActivity.MakeGraph makeGraph) {
+    public void createGraphDataTab() {
+        series = new BarGraphSeries<>();
+
         Iterator<String> iToBeChecked = auxCodes.getToBeCheckedCodeList().iterator();
 
         int dataTab[] = new int[nBins];
@@ -69,7 +71,6 @@ public class Graph {
         }
 
         for(int binx=0; binx< dataTab.length; binx++){
-            makeGraph.updateProgress(100 * binx/Graph.getNBins());
             graphDataTab[binx] = new DataPoint((binx+0.5)*nCodes/nBins, dataTab[binx]);
         }
     }
