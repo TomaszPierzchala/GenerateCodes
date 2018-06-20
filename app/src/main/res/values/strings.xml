@@ -6,5 +6,6 @@
     <string name="label_code">Last generated code</string>
     <string name="label_need_to_be_checked">Still last to be checked :</string>
     <string name="insert_code_text">Remove checked code</string>
+    <string name="insert_code_hint">_ _ _ _</string>
     <string name="button_remove">Remove</string>
 </resources>

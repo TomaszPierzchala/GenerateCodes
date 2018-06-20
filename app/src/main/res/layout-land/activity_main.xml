@@ -67,6 +67,7 @@
         android:ems="10"
         android:inputType="number"
         android:paddingTop="30dp"
+        android:hint="@string/insert_code_hint"
         android:text="@string/insert_code_text"
         android:textAlignment="center"
         android:textSize="24sp"
