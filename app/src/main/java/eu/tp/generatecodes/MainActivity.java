@@ -2,7 +2,6 @@ package eu.tp.generatecodes;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -10,7 +9,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -185,19 +183,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateInfoAndGraph(){
         updateCodesToCheckTextView();
-        new MakeGraph().execute((Void) null);
+        createOrUpdateGraph();
     }
     private void updateCodesToCheckTextView() {
         TextView lastCodes = findViewById(R.id.lastCodes);
         lastCodes.setText(Integer.toString(auxCodes.getToBeCheckedCodeList().size()));
     }
 
-    private class MakeGraph extends AsyncTask<Void, Integer, Void> {
-
-        ProgressBar progressBar = findViewById(R.id.progressBar);
-
-        @Override
-        protected Void doInBackground(Void... voids) {
+    private void createOrUpdateGraph() {
 
             GraphView graph = findViewById(R.id.graph);
             // activate horizontal zooming and scrolling
@@ -216,14 +209,7 @@ public class MainActivity extends AppCompatActivity {
             graph.getViewport().setMaxY(1);
 
             if (Graph.series == null) {
-                Graph.series = new BarGraphSeries<>();
-                //
-                progressBar.setVisibility(View.VISIBLE);
-                //
-                for (int x = 0; x < Graph.getNBins(); x++) {
-                    auxGraph.updateGivenGraphData(x);
-                    publishProgress(100 * x/Graph.getNBins());
-                }
+                auxGraph.createGraphDataTab();
             }
             Graph.series = new BarGraphSeries<>(Graph.graphDataTab);
             Graph.series.setDataWidth(Graph.getNCodes()/Graph.getNBins());
@@ -237,18 +223,6 @@ public class MainActivity extends AppCompatActivity {
                     return Color.argb((int) data.getY()*255 * Graph.getNBins()/Graph.getNCodes(), 0, 0, 255 );
                 }
             });
-            return null;
         }
-
-        @Override
-        protected void onProgressUpdate(Integer... progress) {
-            progressBar.setProgress(progress[0]);
-        }
-        @Override
-        protected void onPostExecute(Void result) {
-            progressBar.setVisibility(View.INVISIBLE);
-        }
-
-    }
 
 }

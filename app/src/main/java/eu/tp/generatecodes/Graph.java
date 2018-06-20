@@ -7,6 +7,7 @@ import com.jjoe64.graphview.series.DataPoint;
 
 import java.text.DecimalFormat;
 import java.text.ParseException;
+import java.util.Iterator;
 
 public class Graph {
     private static Codes auxCodes = null;
@@ -43,22 +44,45 @@ public class Graph {
 
     public void updateGraphDataTab(String removedCode){
         try {
-            int x = df.parse(removedCode).intValue();
-            x = nBins * x/nCodes;
-            double y = graphDataTab[x].getY() + 1.;
-            graphDataTab[x] = new DataPoint((x+0.5)*nCodes/nBins, y);
+            int ncode = df.parse(removedCode).intValue();
+            int binx = nBins * ncode/nCodes;
+            double y = graphDataTab[binx].getY() + 1.;
+            graphDataTab[binx] = new DataPoint((binx+0.5)*nCodes/nBins, y);
         } catch (ParseException e) {
             Log.e("updateGraphDataTab(" + removedCode +")", "thrown ParseException", e);
         }
     }
 
-    public void updateGivenGraphData(int x){
-        // update given graph DataPoint from Codes list
-        double y = 0;
-        for(int c = x*nCodes/nBins; c<(x+1)*nCodes/nBins; c++) {
-            y += (auxCodes.getToBeCheckedCodeList().contains(df.format(c))) ? 0. : 1.;
+    public void createGraphDataTab() {
+        series = new BarGraphSeries<>();
+
+        Iterator<String> iToBeChecked = auxCodes.getToBeCheckedCodeList().iterator();
+
+        int dataTab[] = new int[nBins];
+
+        for(short s=0; s<nBins; s++){
+            dataTab[s] = nCodes/nBins;
         }
-        graphDataTab[x] = new DataPoint((x+0.5)*nCodes/nBins, y);
+
+        while(iToBeChecked.hasNext()){
+            int ncode = parseCode(iToBeChecked.next());
+            int binx = nBins * ncode/nCodes;
+            dataTab[binx]--;
+        }
+
+        for(int binx=0; binx< dataTab.length; binx++){
+            graphDataTab[binx] = new DataPoint((binx+0.5)*nCodes/nBins, dataTab[binx]);
+        }
+    }
+
+    private int parseCode(String code) {
+        int ncode = -1;
+        try {
+            ncode = df.parse(code).intValue();
+        } catch (ParseException e) {
+            Log.e("parseCode to int", "Parse exception - " + e.getMessage());
+        }
+        return ncode;
     }
 
 }
