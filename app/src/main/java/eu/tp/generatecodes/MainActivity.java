@@ -192,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
         lastCodes.setText(Integer.toString(auxCodes.getToBeCheckedCodeList().size()));
     }
 
-    private class MakeGraph extends AsyncTask<Void, Integer, Void> {
+    class MakeGraph extends AsyncTask<Void, Integer, Void> {
 
         ProgressBar progressBar = findViewById(R.id.progressBar);
 
@@ -219,11 +219,7 @@ public class MainActivity extends AppCompatActivity {
                 Graph.series = new BarGraphSeries<>();
                 //
                 progressBar.setVisibility(View.VISIBLE);
-                //
-                for (int x = 0; x < Graph.getNBins(); x++) {
-                    auxGraph.updateGivenGraphData(x);
-                    publishProgress(100 * x/Graph.getNBins());
-                }
+                auxGraph.createGraphDataTab(this);
             }
             Graph.series = new BarGraphSeries<>(Graph.graphDataTab);
             Graph.series.setDataWidth(Graph.getNCodes()/Graph.getNBins());
@@ -247,6 +243,10 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void result) {
             progressBar.setVisibility(View.INVISIBLE);
+        }
+
+        void updateProgress(Integer... precent){
+            publishProgress(precent);
         }
 
     }
