@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
 
     private final float SMALL = 20f;
     private final float BIG = 36f;
-    private final long waitBeforeRegenerate = 5000; // wait 5s to avoid accidental regeneration
+    private final long WAIT_BEFORE_REGENERATE = 5000; // wait 5s to avoid accidental regeneration
 
     static Long lastGeneratedTime;
 
@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     protected void generateCode() {
-        if(System.currentTimeMillis() - lastGeneratedTime < waitBeforeRegenerate){
+        if(System.currentTimeMillis() - lastGeneratedTime < WAIT_BEFORE_REGENERATE){
             Context context = getApplicationContext();
             CharSequence text = "To avoid miss clicks, please wait few more seconds (<5s)";
             int duration = Toast.LENGTH_SHORT;
