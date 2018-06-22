@@ -32,8 +32,15 @@ public class MainActivity extends AppCompatActivity {
 
     private final float SMALL = 20f;
     private final float BIG = 36f;
-    private final long waitBeforeRegenerate = 5000; // wait 5s to avoid accidental regeneration
-    long lastGeneratedTime = System.currentTimeMillis();
+    private final long WAIT_BEFORE_REGENERATE = 5000; // wait 5s to avoid accidental regeneration
+
+    static Long lastGeneratedTime;
+
+    public MainActivity() {
+        if(lastGeneratedTime==null){
+            lastGeneratedTime = System.currentTimeMillis() - 2000;
+        }
+    }
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener;
 
@@ -68,9 +75,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     protected void generateCode() {
-        if(System.currentTimeMillis() - lastGeneratedTime < waitBeforeRegenerate){
+        if(System.currentTimeMillis() - lastGeneratedTime < WAIT_BEFORE_REGENERATE){
             Context context = getApplicationContext();
-            CharSequence text = "can NOT generate new code, please wait few more seconds (<5s)";
+            CharSequence text = "To avoid miss clicks, please wait few more seconds (<5s)";
             int duration = Toast.LENGTH_SHORT;
 
             Toast toast = Toast.makeText(context, text, duration);
